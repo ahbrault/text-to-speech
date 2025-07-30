@@ -17,12 +17,31 @@ def normalize_text(text: str) -> str:
     """
     Nettoie et normalise le texte pour le rendre compatible avec le modèle TTS.
     """
+    # Gestion intelligente des paragraphes pour éviter les doubles points.
+    paragraphs = re.split(r'\n\s*\n', text)
+    processed_paragraphs = []
+    for para in paragraphs:
+        # Nettoie les retours à la ligne internes et les espaces superflus
+        cleaned_para = re.sub(r'\s+', ' ', para.replace('\n', ' ')).strip()
+        if not cleaned_para:
+            continue
+        
+        # Ajoute un point final uniquement si le paragraphe n'en a pas déjà un.
+        if cleaned_para[-1] not in ".!?":
+            cleaned_para += '.'
+        processed_paragraphs.append(cleaned_para)
+    
+    # Reconstitue le texte à partir des paragraphes traités.
+    text = ' '.join(processed_paragraphs)
+
+    # Le reste de la normalisation se poursuit comme avant.
     text = re.sub(r"[’‘]", "'", text)
     text = re.sub(r'[“”«»]', '"', text)
     text = re.sub(r"—", "-", text)
     text = re.sub(r"[\/|*~]", " ", text)
     text = text.replace("€", "euros").replace("$", "dollars").replace("%", "pourcent")
     text = text.replace("\u200c", "")
+    
     allowed_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?'\"-"
     text = ''.join(filter(lambda char: char in allowed_chars, text))
     return text
